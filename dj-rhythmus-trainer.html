@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111111">
+<title>DJ Rhythmus-Trainer</title>
+<style>
+  :root{
+    --bg:#111;
+    --panel:#1d1d1d;
+    --text:#fff;
+    --muted:#c7c7c7;
+    --good:#40d17a;
+    --warn:#ffd34d;
+    --bad:#ff6b6b;
+    --accent:#6aa8ff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    min-height:100vh;
+  }
+  button,select{font:inherit}
+  .wrap{max-width:900px;margin:auto;padding:20px}
+  h1{font-size:clamp(30px,6vw,52px);margin:10px 0 6px}
+  h2{font-size:clamp(26px,5vw,42px);margin:8px 0}
+  p{font-size:clamp(18px,3.5vw,24px);line-height:1.35}
+  .muted{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:24px}
+  .card,.panel{
+    background:var(--panel);border-radius:24px;padding:22px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25)
+  }
+  .big{
+    width:100%;min-height:108px;border:0;border-radius:22px;
+    background:#2c2c2c;color:white;font-weight:800;font-size:clamp(24px,4vw,36px);
+    padding:18px;cursor:pointer;
+  }
+  .big:active{transform:scale(.985)}
+  .primary{background:var(--accent);color:#071526}
+  .success{background:var(--good);color:#062814}
+  .danger{background:var(--bad);color:#340909}
+  .secondary{background:#333}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:1 1 180px}
+  .small{
+    border:0;border-radius:16px;background:#333;color:white;
+    padding:14px 16px;font-weight:700;font-size:18px;cursor:pointer
+  }
+  .pill{
+    display:inline-block;background:#2b2b2b;border-radius:999px;
+    padding:8px 12px;margin:4px 4px 4px 0;font-weight:700
+  }
+  .feedback{
+    min-height:86px;display:flex;align-items:center;justify-content:center;text-align:center;
+    border-radius:22px;background:#292929;font-size:clamp(28px,6vw,50px);font-weight:900;
+    margin:18px 0;
+  }
+  .feedback.good{background:rgba(64,209,122,.16);color:var(--good)}
+  .feedback.warn{background:rgba(255,211,77,.13);color:var(--warn)}
+  .feedback.bad{background:rgba(255,107,107,.14);color:var(--bad)}
+  .meter{height:22px;background:#333;border-radius:999px;overflow:hidden;margin:14px 0}
+  .meter>div{height:100%;width:0%;background:var(--accent);transition:width .15s}
+  .count{
+    font-size:clamp(70px,20vw,150px);font-weight:950;text-align:center;line-height:1;
+    margin:15px 0 8px;
+  }
+  .tap{
+    min-height:180px;border-radius:34px;font-size:clamp(40px,10vw,78px);
+    touch-action:manipulation;
+  }
+  .jogWrap{display:flex;justify-content:center;margin:22px 0}
+  .jog{
+    width:min(68vw,360px);aspect-ratio:1;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%,#333 0 21%,#222 22% 54%,#444 55% 58%,#181818 59%);
+    border:8px solid #555;position:relative;touch-action:none;user-select:none;
+    box-shadow:inset 0 0 30px #000,0 10px 30px rgba(0,0,0,.35);
+  }
+  .jog:after{
+    content:"";position:absolute;left:50%;top:7%;width:8px;height:22%;
+    background:white;border-radius:10px;transform:translateX(-50%);
+  }
+  .jogLabel{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:24px;font-weight:900;pointer-events:none;padding:70px
+  }
+  .statusLine{font-size:20px;text-align:center;color:var(--muted);min-height:32px}
+  .hidden{display:none!important}
+  select{
+    width:100%;padding:14px;border-radius:14px;background:#333;color:white;border:0;font-weight:700
+  }
+  .toggle{
+    display:flex;align-items:center;gap:10px;font-size:18px;margin:10px 0
+  }
+  input[type=checkbox]{width:28px;height:28px}
+  .score{font-size:20px;font-weight:800}
+  .footer{font-size:14px;color:#999;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="home">
+  <h1>DJ Rhythmus-Trainer</h1>
+  <p class="muted">Zwei kurze Übungen für den Workshop.</p>
+  <div class="grid">
+    <div class="card">
+      <h2>🥁 Die 1 finden</h2>
+      <p>Puls mitklopfen und die <strong>1</strong> im Takt treffen.</p>
+      <button class="big primary" onclick="showScreen('one')">Start</button>
+    </div>
+    <div class="card">
+      <h2>🎧 Beats zusammenbringen</h2>
+      <p>Zwei gleich schnelle Beats mit dem Jogwheel zusammenschieben.</p>
+      <button class="big primary" onclick="showScreen('match')">Start</button>
+    </div>
+  </div>
+</section>
+
+<section id="one" class="hidden">
+  <div class="row">
+    <button class="small" onclick="stopAll();showScreen('home')">← Zurück</button>
+    <button class="small" onclick="resetOne()">↻ Neu</button>
+  </div>
+  <h2>🥁 Die 1 finden</h2>
+
+  <div class="panel">
+    <label><strong>Aufgabe</strong></label>
+    <select id="oneMode" onchange="resetOne()">
+      <option value="beat">1 · Jeden Beat mittippen</option>
+      <option value="oneAccent">2 · Nur die 1 tippen – mit Betonung</option>
+      <option value="oneCount">3 · Nur die 1 tippen – ohne Betonung</option>
+      <option value="groove">4 · Die 1 in einem Groove finden</option>
+    </select>
+
+    <div class="toggle">
+      <input id="visualHelp" type="checkbox" checked>
+      <label for="visualHelp">Zahlen 1–2–3–4 anzeigen</label>
+    </div>
+
+    <div class="row">
+      <button id="onePlay" class="small success" onclick="toggleOne()">▶ Start</button>
+      <div class="score">Treffer: <span id="oneHits">0</span> / <span id="oneTries">0</span></div>
+    </div>
+
+    <div id="countDisplay" class="count">–</div>
+    <div id="oneFeedback" class="feedback">Drücke Start.</div>
+    <div class="meter"><div id="oneMeter"></div></div>
+
+    <button id="tapBtn" class="big tap primary" onclick="registerTap()">TIPPEN</button>
+    <p class="muted" id="oneInstruction">Tippe auf jeden Beat.</p>
+  </div>
+</section>
+
+<section id="match" class="hidden">
+  <div class="row">
+    <button class="small" onclick="stopAll();showScreen('home')">← Zurück</button>
+    <button class="small" onclick="newMatchRound()">↻ Neue Aufgabe</button>
+  </div>
+  <h2>🎧 Beats zusammenbringen</h2>
+
+  <div class="panel">
+    <label><strong>Aufgabe</strong></label>
+    <select id="matchMode" onchange="newMatchRound()">
+      <option value="beats">1 · Beats übereinander bringen</option>
+      <option value="bars">2 · Die 1 auf die 1 bringen</option>
+    </select>
+
+    <div class="row">
+      <button id="matchPlay" class="small success" onclick="toggleMatch()">▶ Start</button>
+      <button class="small" onclick="newMatchRound()">🎲 Neu versetzen</button>
+    </div>
+
+    <div id="matchFeedback" class="feedback">Drücke Start.</div>
+    <p class="statusLine" id="directionHint">Höre zuerst. Dann schiebe.</p>
+
+    <div class="jogWrap">
+      <div id="jog" class="jog">
+        <div class="jogLabel">Wischen<br>↔</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="big secondary" onclick="nudge(-0.025)">← etwas zurück</button>
+      <button class="big secondary" onclick="nudge(0.025)">etwas vor →</button>
+    </div>
+
+    <div class="meter"><div id="matchMeter"></div></div>
+    <p class="muted">Tipp: Erst hören. Dann nur wenig schieben. Ziel: Die Schläge klingen möglichst wie <strong>ein</strong> Schlag.</p>
+  </div>
+</section>
+
+<p class="footer">Die Klänge werden direkt im Browser erzeugt. Keine Audiodateien und kein Server notwendig.</p>
+</div>
+
+<script>
+let ctx = null;
+let master = null;
+
+function ensureAudio(){
+  if(!ctx){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = 0.55;
+    master.connect(ctx.destination);
+  }
+  if(ctx.state === 'suspended') ctx.resume();
+}
+
+function kick(t, gain=0.8, freq=120){
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.frequency.setValueAtTime(freq, t);
+  o.frequency.exponentialRampToValueAtTime(48, t + 0.08);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 0.16);
+}
+function click(t, accent=false){
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type='square';
+  o.frequency.value = accent ? 1250 : 850;
+  g.gain.setValueAtTime(accent ? .18 : .10, t);
+  g.gain.exponentialRampToValueAtTime(.001, t+.045);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t+.05);
+}
+function snare(t){
+  const buffer=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate);
+  const d=buffer.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const s=ctx.createBufferSource(); s.buffer=buffer;
+  const g=ctx.createGain(); g.gain.value=.11;
+  s.connect(g); g.connect(master); s.start(t);
+}
+function hat(t){
+  const buffer=ctx.createBuffer(1,ctx.sampleRate*.025,ctx.sampleRate);
+  const d=buffer.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const s=ctx.createBufferSource(); s.buffer=buffer;
+  const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=5000;
+  const g=ctx.createGain(); g.gain.value=.04;
+  s.connect(hp); hp.connect(g); g.connect(master); s.start(t);
+}
+
+function showScreen(id){
+  ['home','one','match'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function setFeedback(el, text, cls=''){
+  el.className='feedback'+(cls?' '+cls:'');
+  el.textContent=text;
+}
+
+/* ---------- ÜBUNG 1 ---------- */
+const BPM=96;
+const BEAT=60/BPM;
+let oneRunning=false, oneTimer=null, oneStart=0, nextOneBeat=0, beatIndex=0;
+let oneHits=0, oneTries=0;
+let recentTargets=[];
+
+function resetOne(){
+  stopOne();
+  oneHits=0; oneTries=0;
+  document.getElementById('oneHits').textContent='0';
+  document.getElementById('oneTries').textContent='0';
+  document.getElementById('oneMeter').style.width='0%';
+  document.getElementById('countDisplay').textContent='–';
+  setFeedback(document.getElementById('oneFeedback'),'Drücke Start.');
+  const mode=document.getElementById('oneMode').value;
+  const texts={
+    beat:'Tippe auf jeden Beat.',
+    oneAccent:'Tippe nur auf die 1.',
+    oneCount:'Zähle innerlich 1–2–3–4. Tippe nur auf die 1.',
+    groove:'Höre den Groove. Tippe nur auf die 1.'
+  };
+  document.getElementById('oneInstruction').textContent=texts[mode];
+}
+function toggleOne(){
+  if(oneRunning) stopOne(); else startOne();
+}
+function startOne(){
+  ensureAudio();
+  oneRunning=true;
+  document.getElementById('onePlay').textContent='■ Stop';
+  const lead=.18;
+  oneStart=ctx.currentTime+lead;
+  nextOneBeat=oneStart;
+  beatIndex=0; recentTargets=[];
+  oneTimer=setInterval(scheduleOne,25);
+  scheduleOne();
+}
+function stopOne(){
+  oneRunning=false;
+  if(oneTimer) clearInterval(oneTimer);
+  oneTimer=null;
+  const b=document.getElementById('onePlay');
+  if(b) b.textContent='▶ Start';
+}
+function scheduleOne(){
+  if(!oneRunning) return;
+  const mode=document.getElementById('oneMode').value;
+  while(nextOneBeat < ctx.currentTime+.12){
+    const b=beatIndex%4;
+    const isOne=b===0;
+
+    if(mode==='groove'){
+      kick(nextOneBeat, isOne?.85:.62, isOne?125:105);
+      if(b===1||b===3) snare(nextOneBeat);
+      hat(nextOneBeat+BEAT/2);
+    } else {
+      let accent = false;
+      if(mode==='oneAccent') accent=isOne;
+      if(mode==='beat') accent=isOne;
+      // oneCount has no acoustic accent after starting
+      click(nextOneBeat, accent);
+    }
+
+    recentTargets.push({t:nextOneBeat, beat:b, isOne});
+    recentTargets=recentTargets.filter(x=>x.t>ctx.currentTime-2);
+
+    const show=document.getElementById('visualHelp').checked;
+    const n=b+1;
+    setTimeout(()=>{
+      if(oneRunning) document.getElementById('countDisplay').textContent=show?n:'•';
+    },Math.max(0,(nextOneBeat-ctx.currentTime)*1000));
+
+    nextOneBeat+=BEAT;
+    beatIndex++;
+  }
+}
+function registerTap(){
+  if(!oneRunning){ setFeedback(document.getElementById('oneFeedback'),'Erst Start drücken.','warn'); return; }
+  ensureAudio();
+  const now=ctx.currentTime;
+  const mode=document.getElementById('oneMode').value;
+  const valid = recentTargets.filter(x => mode==='beat' ? true : x.isOne);
+  // include mathematically upcoming target if scheduler list is narrow
+  let best=null, bestAbs=999;
+  for(const x of valid){
+    const d=now-x.t, a=Math.abs(d);
+    if(a<bestAbs){bestAbs=a;best={...x,d};}
+  }
+  // calculate nearest target from start as fallback
+  if(!best){
+    let period = mode==='beat'?BEAT:BEAT*4;
+    let base = oneStart;
+    let k=Math.round((now-base)/period);
+    let target=base+k*period;
+    best={t:target,d:now-target};
+    bestAbs=Math.abs(best.d);
+  }
+
+  oneTries++;
+  const ms=Math.round(best.d*1000);
+  let text,cls,score;
+  if(bestAbs<=.09){ text='✓ Genau!'; cls='good'; score=100; oneHits++; }
+  else if(bestAbs<=.18){
+    text=ms<0?'Etwas zu früh':'Etwas zu spät'; cls='warn'; score=70; oneHits++;
+  } else {
+    text=ms<0?'Zu früh':'Zu spät'; cls='bad'; score=Math.max(5,100-bestAbs*260);
+  }
+  document.getElementById('oneHits').textContent=oneHits;
+  document.getElementById('oneTries').textContent=oneTries;
+  document.getElementById('oneMeter').style.width=Math.min(100,score)+'%';
+  setFeedback(document.getElementById('oneFeedback'),text,cls);
+}
+
+/* ---------- ÜBUNG 2 ---------- */
+let matchRunning=false, matchTimer=null;
+let nextA=0,nextB=0, aCount=0,bCount=0;
+let phase=0.18; // seconds B relative to A
+const MATCH_BEAT=60/100;
+
+function newMatchRound(){
+  stopMatch();
+  const mode=document.getElementById('matchMode').value;
+  if(mode==='beats'){
+    const sign=Math.random()<.5?-1:1;
+    phase=sign*(.09+Math.random()*.22);
+  }else{
+    // Same beat grid, but deliberately one or more beats displaced to teach bar/downbeat relation.
+    const choices=[MATCH_BEAT,-MATCH_BEAT,2*MATCH_BEAT,-2*MATCH_BEAT];
+    phase=choices[Math.floor(Math.random()*choices.length)] + (Math.random()-.5)*.07;
+  }
+  setFeedback(document.getElementById('matchFeedback'),'Drücke Start.');
+  document.getElementById('directionHint').textContent='Höre zuerst. Dann schiebe.';
+  updateMatchMeter();
+}
+function toggleMatch(){ if(matchRunning) stopMatch(); else startMatch(); }
+function startMatch(){
+  ensureAudio();
+  matchRunning=true;
+  document.getElementById('matchPlay').textContent='■ Stop';
+  const base=ctx.currentTime+.18;
+  nextA=base; nextB=base+phase;
+  aCount=0; bCount=0;
+  matchTimer=setInterval(scheduleMatch,20);
+  scheduleMatch();
+  updateMatchFeedback();
+}
+function stopMatch(){
+  matchRunning=false;
+  if(matchTimer) clearInterval(matchTimer);
+  matchTimer=null;
+  const b=document.getElementById('matchPlay');
+  if(b) b.textContent='▶ Start';
+}
+function scheduleMatch(){
+  if(!matchRunning) return;
+  const mode=document.getElementById('matchMode').value;
+  while(nextA<ctx.currentTime+.12){
+    const one=aCount%4===0;
+    kick(nextA, one && mode==='bars' ? .8:.52, one&&mode==='bars'?135:100);
+    nextA+=MATCH_BEAT; aCount++;
+  }
+  while(nextB<ctx.currentTime+.12){
+    const one=bCount%4===0;
+    // Higher click layered on B, making two decks audibly distinct
+    kick(nextB, one && mode==='bars' ? .58:.40, one&&mode==='bars'?170:145);
+    nextB+=MATCH_BEAT; bCount++;
+  }
+}
+function normalizedBeatPhase(sec){
+  let x=((sec+MATCH_BEAT/2)%MATCH_BEAT+MATCH_BEAT)%MATCH_BEAT-MATCH_BEAT/2;
+  return x;
+}
+function normalizedBarPhase(sec){
+  const bar=MATCH_BEAT*4;
+  return ((sec+bar/2)%bar+bar)%bar-bar/2;
+}
+function currentError(){
+  const mode=document.getElementById('matchMode').value;
+  return mode==='beats' ? normalizedBeatPhase(phase) : normalizedBarPhase(phase);
+}
+function nudge(delta){
+  // "vor" means B happens earlier => reduce delay; but labels feel spatial.
+  // We map left/back to later and right/forward to earlier consistently with phase.
+  phase -= delta;
+  if(matchRunning) nextB -= delta;
+  updateMatchFeedback();
+}
+function updateMatchMeter(){
+  const err=Math.abs(currentError());
+  const mode=document.getElementById('matchMode').value;
+  const max=mode==='beats'?MATCH_BEAT/2:MATCH_BEAT*2;
+  const score=Math.max(0,100-(err/max)*100);
+  document.getElementById('matchMeter').style.width=score+'%';
+}
+function updateMatchFeedback(){
+  const err=currentError();
+  const a=Math.abs(err);
+  let text,cls;
+  if(a<.045){text='✓ Zusammen!';cls='good';}
+  else if(a<.095){text='Fast!';cls='warn';}
+  else{text='Noch auseinander';cls='bad';}
+  setFeedback(document.getElementById('matchFeedback'),text,cls);
+  document.getElementById('directionHint').textContent =
+    a<.045 ? 'Sehr gut. Neue Aufgabe starten.' :
+    (err>0 ? 'Der zweite Beat kommt zu spät.' : 'Der zweite Beat kommt zu früh.');
+  updateMatchMeter();
+}
+
+/* Jogwheel gesture */
+const jog=document.getElementById('jog');
+let dragging=false,lastX=0;
+function beginDrag(x){dragging=true;lastX=x;}
+function moveDrag(x){
+  if(!dragging)return;
+  const dx=x-lastX; lastX=x;
+  // 1px ~= 1.2ms, limited per event
+  const sec=Math.max(-.04,Math.min(.04,dx*.0012));
+  phase-=sec;
+  if(matchRunning) nextB-=sec;
+  updateMatchFeedback();
+}
+function endDrag(){dragging=false;}
+jog.addEventListener('pointerdown',e=>{jog.setPointerCapture(e.pointerId);beginDrag(e.clientX)});
+jog.addEventListener('pointermove',e=>moveDrag(e.clientX));
+jog.addEventListener('pointerup',endDrag);
+jog.addEventListener('pointercancel',endDrag);
+
+function stopAll(){stopOne();stopMatch();}
+document.addEventListener('visibilitychange',()=>{if(document.hidden) stopAll();});
+</script>
+</body>
+</html>
